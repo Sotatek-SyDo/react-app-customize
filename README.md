@@ -1,274 +1,130 @@
-# React Base White-Label Application
+# react-app-customize
 
-A white-label React application with Vite, TypeScript, and Ant Design. Build multiple client-specific applications from a single codebase.
+`react-app-customize` is a high-performance, enterprise-ready React source base designed for **build-time customization**. It allows engineering teams to maintain multiple client-specific applications from a single codebase without leaking client-specific logic or code into other builds.
 
-## 🌟 Key Features
+---
 
-- ✅ **White-label architecture** - Multiple clients from one codebase
-- ✅ **Build-time injection** - Client code injected at build time via Vite aliases
-- ✅ **Zero client exposure** - Only selected client's code is bundled
-- ✅ **Type-safe** - Full TypeScript support for base and custom code
-- ✅ **Modern stack** - React 18, Vite 5, TypeScript 5, Ant Design 5
+## 🌟 Key Philosophy
 
-## 🏗️ Architecture
+The core idea is **Zero Runtime Switching**. Instead of using environment variables or runtime checks (`if (client === 'A')`), this source base uses **Vite Aliases** to swap implementations at build time. This results in:
+- **Smaller Bundles**: Only the code for the target client is included in the production build.
+- **Better Security**: Client-specific business logic or secrets are never exposed to other clients.
+- **Cleaner Core**: The base application remains generic and easy to maintain.
 
-```
-Base Application (app/src)
-         ↓
-   @current-client alias
-         ↓
-Client Customizations (customize/{client}/)
-```
+---
 
-**How it works:**
-1. `app/` - Contains shared code
-2. `customize/{client}/` - Override components/pages for each client
-3. `@current-client` - Vite alias points to selected client at build time
-4. `dist/{client}/` - Contains only the built client's code
+## 🚀 Quick Start
 
-## 🚀 Usage
-
-### Installation
+### 1. Installation
+Install all dependencies using Yarn:
 ```bash
 yarn install
 ```
 
-### Development
+### 2. Development Mode
+Run the development server for a specific client (defaults to `default` if no client is specified):
 ```bash
-yarn dev              # Default client
-yarn dev hitowa       # Hitowa client
-yarn dev medix        # Medix client
+yarn dev                # Runs 'default' client
+yarn dev hitowa         # Runs 'hitowa' customization
+yarn dev medix          # Runs 'medix' customization
 ```
 
-### Production Build
+### 3. Production Build
+Build the application for a specific client. The output will be located in `dist/{client-name}/`:
 ```bash
-yarn build            # Default client
-yarn build hitowa     # Hitowa client
-yarn build medix      # Medix client
+yarn build hitowa
 ```
 
-## 📁 Project Structure
+---
 
-```
-base-react-v2/
-├── app/                    # Base application
-│   ├── src/
-│   │   ├── components/     # Shared components
-│   │   ├── pages/          # Base pages
-│   │   ├── router/         # Routing
-│   │   └── store/          # Redux store
-│   ├── tsconfig.json
-│   └── tailwind.config.js
-│
-├── customize/              # Client customizations
-│   ├── default/
-│   ├── hitowa/
-│   │   ├── src/
-│   │   │   ├── components/ # Custom components
-│   │   │   └── pages/      # Custom pages
-│   │   └── index.ts        # Export custom modules
-│   └── medix/
-│
-├── scripts/
-│   ├── dev.mjs            # Dev script
-│   └── build.mjs          # Build script
-│
-├── vite.config.ts         # Vite config
-└── tsconfig.json          # Root TypeScript config
-```
+## 🏗️ Architecture & Project Structure
 
-## 🔧 Configuration
+The repository is structured to separate core application logic from client-specific overrides.
 
-### Path Aliases (Vite & TypeScript)
-- `@/` → `app/src/`
-- `@components/` → `app/src/components/`
-- `@customize/` → `customize/`
-- `@current-client` → `customize/{client}/index.ts`
-
-### Tailwind Config
-Scans both base and client files:
-```javascript
-content: [
-  './src/**/*.{js,ts,jsx,tsx}',
-  '../customize/**/*.{js,ts,jsx,tsx}'
-]
-```
-
-## 📝 Creating a New Client
-
-### 1. Create directory
 ```bash
-mkdir -p customize/new-client/src/components
+react-app-customize/
+├── app/                        # 🏠 Base Application
+│   ├── src/                    # Core source code (Generic)
+│   │   ├── components/         # Shared UI components
+│   │   ├── pages/              # Base page implementations
+│   │   ├── hooks/              # Reusable React hooks
+│   │   ├── store/              # Global state management
+│   │   └── App.tsx             # Root component using @current-client
+│   ├── tsconfig.json           # App-specific TS config
+│   └── tailwind.config.js      # Tailwind scanning base + customize
+├── customize/                  # 🎨 Client Customizations
+│   ├── default/                # Fallback implementation
+│   ├── hitowa/                 # Customization for Hitowa
+│   │   ├── src/                # Custom components/pages
+│   │   │   ├── components/
+│   │   │   └── pages/
+│   │   └── index.ts            # Entry point exporting overrides
+│   └── medix/                  # Customization for Medix
+├── scripts/                    # 🛠️ Build & Dev Scripts
+│   ├── dev.mjs                 # Handles dynamic aliasing for dev
+│   └── build.mjs               # Handles dynamic aliasing for build
+├── vite.config.ts              # Core Vite configuration
+└── package.json                # Project dependencies and scripts
 ```
 
-### 2. Create entry point: `customize/new-client/index.ts`
-```typescript
-export { default as CustomHeader } from './src/components/CustomHeader';
-export { default as CustomDashboard } from './src/pages/Dashboard';
-```
+---
 
-### 3. Create component: `customize/new-client/src/components/CustomHeader.tsx`
+## 🎨 Path Aliasing (The Secret Sauce)
+
+This project relies on path aliases defined in `vite.config.ts` and `tsconfig.json`.
+
+- **`@/`**: Directly points to `app/src/`. Used for all internal core imports.
+- **`@current-client`**: This is a dynamic alias. When you run `yarn dev hitowa`, this alias points to `customize/hitowa/index.ts`.
+
+### How to use in `app/src`:
 ```tsx
-import { AppButton } from '@/components/atoms/AppButton';
-import { Avatar, Button, Flex } from 'antd';
-
-const CustomHeader = () => {
-  return (
-    <header style={{ background: '#brand-color' }}>
-      <Flex justify='space-between'>
-        <Button type='link'>Logo</Button>
-        <Flex gap={16}>
-          <AppButton>Dashboard</AppButton>
-          <Avatar />
-        </Flex>
-      </Flex>
-    </header>
-  );
-};
-
-export default CustomHeader;
-```
-
-### 4. Use in base app: `app/src/App.tsx`
-```tsx
+// Inside app/src/App.tsx
 import { CustomHeader } from '@current-client';
 
 function App() {
   return (
     <div>
-      <CustomHeader />
-      {/* Rest of app */}
+      <CustomHeader /> {/* Injected at build time */}
+      <MainContent />
     </div>
   );
 }
 ```
 
-### 5. Run client
-```bash
-yarn dev new-client
-```
+---
 
-## 🎨 Import Aliases
+## 🛠️ Technology Stack
 
-```tsx
-// Base app
-import { AppButton } from '@/components/atoms/AppButton';
-import { useAuth } from '@/hooks/useAuth';
-
-// Client customizations (build-time injection)
-import { CustomHeader } from '@current-client';
-
-// Direct client access
-import { theme } from '@customize/hitowa/src/theme';
-```
-
-## 🛠️ Tech Stack
-
-- React 18, TypeScript 5, Vite 5 (SWC)
-- Ant Design 5, Tailwind CSS 4
-- React Router 6, Redux Toolkit, TanStack Query
-- ESLint, Prettier, Husky, Commitlint
-
-## 📦 Scripts
-
-| Command | Description |
-|---------|-------------|
-| `yarn dev [client]` | Dev server |
-| `yarn build [client]` | Production build |
-| `yarn lint` | Run ESLint |
-| `yarn typecheck` | TypeScript check |
-
-## 🔒 Security & Performance
-
-**Security:**
-- Code isolation - Only bundles selected client's code
-- No client exposure - Other clients' code never exposed to browser
-- Build-time injection - No runtime client switching
-
-**Performance:**
-- Automatic code splitting (React, Ant Design, vendors)
-- Tree shaking
-- Pre-bundled dependencies
-- SWC compiler (faster than Babel)
-
-## 📚 Best Practices
-
-### 1. Keep Base App Generic
-❌ Don't:
-```tsx
-const Header = () => {
-  const isHitowa = client === 'hitowa'; // ❌ Client-specific logic
-  return <div>{isHitowa ? 'Hitowa' : 'Other'}</div>;
-};
-```
-
-✅ Do:
-```tsx
-import { CustomHeader } from '@current-client';
-const App = () => <CustomHeader />; // ✅ Client provides implementation
-```
-
-### 2. Follow Naming Conventions
-- Prefix `Custom` for custom components (`CustomHeader`, `CustomButton`)
-- Use clear client names (`hitowa`, `medix`)
-- Keep consistent file structure across clients
-
-### 3. Reuse Base Components
-```tsx
-import { AppButton } from '@/components/atoms/AppButton';
-
-const CustomButton = () => (
-  <AppButton style={{ background: '#brand-color' }}>
-    Custom Text
-  </AppButton>
-);
-```
-
-### 4. Test All Clients
-```bash
-yarn dev default && yarn dev hitowa && yarn dev medix
-yarn build default && yarn build hitowa && yarn build medix
-```
-
-## 🐛 Troubleshooting
-
-**TypeScript Error: Cannot find '@current-client'**
-```bash
-yarn dev hitowa  # Must run with client name, not just 'yarn vite'
-```
-
-**Vite Error: Failed to resolve import**
-```bash
-ls customize/hitowa/index.ts  # Check if index.ts file exists
-```
-
-**Tailwind classes not working**
-```javascript
-// tailwind.config.js must include customize/
-content: ['./src/**/*.{js,ts,jsx,tsx}', '../customize/**/*.{js,ts,jsx,tsx}']
-```
-
-**TypeScript path aliases not working**
-```json
-// tsconfig.json paths must match vite.config.ts
-{
-  "compilerOptions": {
-    "paths": {
-      "@/*": ["app/src/*"],
-      "@components/*": ["app/src/components/*"],
-      "@customize/*": ["customize/*"]
-    }
-  }
-}
-```
-
-## 📖 Additional Documentation
-
-- [App README](./app/README.md) - Detailed app documentation
-- [Vite Docs](https://vitejs.dev/)
-- [React Docs](https://react.dev/)
-- [Ant Design Docs](https://ant.design/)
+- **React 18**: Latest concurrent features.
+- **Vite 5**: Ultra-fast build tool using SWC.
+- **TypeScript 5**: Strict type checking for both core and client code.
+- **Ant Design 5**: CSS-in-JS component library for easy theming.
+- **Tailwind CSS 4**: Utility-first styling with scanning for `customize/` folder.
+- **Redux Toolkit**: Efficient state management.
+- **TanStack Query**: Powerful server state and caching.
 
 ---
 
-**Built with ❤️ using React + Vite + TypeScript**
+## � Customization Workflow
+
+Creating a new white-label version is straightforward:
+
+1. **Create Directory**: `mkdir -p customize/new-client/src/components`.
+2. **Define Overrides**: Create `customize/new-client/src/components/CustomHeader.tsx`.
+3. **Export Components**: In `customize/new-client/index.ts`, export your custom component:
+   ```typescript
+   export { default as CustomHeader } from './src/components/CustomHeader';
+   ```
+4. **Run**: Execute `yarn dev new-client`.
+
+---
+
+## 📚 Best Practices
+
+- **Generic Core**: Keep components in `app/src` as generic as possible. If logic varies by client, move that logic into the `customize/` directory.
+- **Naming Conventions**: Prefix client-specific components with `Custom` (e.g., `CustomButton`) to quickly distinguish them from core components.
+- **Theming**: Use Ant Design tokens for theming. Each client can have its own theme file in its `customize` folder.
+
+---
+
+**Built with ❤️ for scalable, clean, and customizable React applications.**

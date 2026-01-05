@@ -1,242 +1,99 @@
-# React Base White-Label Application
+# react-app-customize (Core Application)
 
-A scalable white-label React application built with Vite, TypeScript, and Ant Design. This architecture allows you to build multiple client-specific applications from a single codebase with build-time customization.
+The `app/` directory is the heart of the project. It contains the **Base Application** logic, which is shared across all white-label versions. Think of this as the "Engine" and the `customize/` directory as the "Skin & Configuration".
 
-## 🏗️ Architecture Overview
+---
 
-This project uses a **white-label architecture** where:
-- **Base application** (`app/`) contains the core functionality and shared components
-- **Client customizations** (`customize/`) contain client-specific overrides and branding
-- **Build-time injection** uses Vite aliases to inject client-specific code at build time
-- **Zero client exposure** - only the selected client's code is bundled, ensuring security
+## 🏗️ Application Structure
 
-### Project Structure
-
-```
-base-react-v2/
-├── app/                          # Base application
-│   ├── src/                      # Core source code
-│   │   ├── components/           # Shared components
-│   │   ├── pages/                # Base pages
-│   │   ├── router/               # Routing configuration
-│   │   └── ...
-│   ├── tsconfig.json             # App-specific TypeScript config
-│   └── tailwind.config.js        # Tailwind configuration
-├── customize/                    # Client customizations
-│   ├── default/                  # Default/fallback client
-│   ├── hitowa/                   # Hitowa client
-│   │   ├── src/
-│   │   │   ├── components/       # Custom components
-│   │   │   └── pages/            # Custom pages
-│   │   └── index.ts              # Client entry point
-│   └── medix/                    # Medix client
-├── scripts/                      # Build and dev scripts
-│   ├── dev.mjs                   # Development script
-│   └── build.mjs                 # Production build script
-├── vite.config.ts                # Vite configuration
-├── tsconfig.json                 # Root TypeScript config
-└── package.json
-```
-
-## 🚀 Getting Started
-
-### Installation
+Below is the detailed layout of the core application. Developers should adhere to this structure to maintain consistency.
 
 ```bash
-yarn install
+app/
+├── src/
+│   ├── assets/             # Tài nguyên tĩnh (Images, Web fonts)
+│   ├── components/         # UI Components (Atomic Design)
+│   │   ├── atoms/          # Thành phần cơ bản nhất (Button, Input, Icon)
+│   │   ├── molecules/      # Kết hợp từ các atoms (FormField, SearchBar)
+│   │   ├── organisms/      # Các khối UI lớn (Header, Sidebar, Footer)
+│   │   ├── templates/      # Layout framework cho các trang
+│   │   └── registry.ts     # Quản lý đăng ký component cho White-label
+│   ├── constants/          # Định nghĩa hằng số, Enum, API Endpoints
+│   ├── hooks/              # Custom hooks dùng chung cho toàn dự án
+│   ├── pages/              # Chứa các trang cơ sở (Base pages)
+│   ├── router/             # Cấu hình định tuyến (React Router 6)
+│   ├── runtime/            # Xử lý logic runtime và khởi tạo ứng dụng
+│   ├── scss/               # Hệ thống stylesheet toàn cục (SASS/SCSS)
+│   ├── services/           # Tầng giao tiếp với API backend
+│   ├── shared/             # Chia sẻ config (Redux, React Query, Ant Design)
+│   ├── store/              # Quản lý Redux slices và middleware
+│   ├── types/              # Định nghĩa các kiểu dữ liệu TypeScript
+│   ├── utils/              # Các hàm bổ trợ (Format, Validate, Truncate)
+│   ├── App.tsx             # Component gốc kết nối @current-client
+│   └── main.tsx            # File khởi tạo mount React vào DOM
+└── tailwind.config.js      # Cấu hình Tailwind cho app và customize
 ```
 
-### Development
+---
 
-Run the development server for a specific client:
+## 🔧 Core Workflow: `@current-client`
 
+The application core logic is written to be **injected**. We use the Vite alias `@current-client` to import components that might vary between clients.
+
+### Standard Import Pattern:
+```tsx
+// Inside app/src/pages/Home.tsx
+import { CustomBanner } from '@current-client'; 
+
+const Home = () => (
+  <main>
+    <CustomBanner /> {/* Logic/UI defined in customize/{client}/ */}
+    <StaticContent />
+  </main>
+);
+```
+
+---
+
+## ⚠️ Lưu ý quan trọng (Important Notes)
+
+Khi phát triển tại thư mục `app/`, hãy đặc biệt chú ý các điểm sau:
+
+### 1. Tính trừu tượng & Runtime Resolution
+Tuyệt đối không viết logic dựa trên tên client (ví dụ: `if (client === 'hitowa')`). 
+- **Cơ chế**: Sử dụng thư mục `runtime/` (ví dụ `resolveComponent.ts`) để quản lý việc tráo đổi component giữa Core và Client.
+- **Giải pháp**: Nếu logic thay đổi theo client, hãy đẩy logic đó vào một component hoặc một hook bên trong `@current-client`.
+
+### 2. Cấu hình thư viện (Shared Folder)
+Tất cả cấu hình cho Redux, React Query, và Ant Design được tập trung tại `shared/`.
+- Khi cần thêm Middleware cho Redux hoặc cấu hình mới cho Query Client, hãy thực hiện tại đây thay vì viết trực tiếp vào `main.tsx`.
+
+### 3. Định nghĩa Props chặt chẽ
+Tất cả các thành phần được export từ `@current-client` phải có **TypeScript Interface** đồng nhất. 
+- Nếu bạn thêm một prop mới vào một component trong core app mà component đó được override ở client, bạn **BẮT BUỘC** phải cập nhật tất cả các bản override ở các client hiện có để tránh lỗi build.
+
+### 3. Tailwind CSS Scanning
+File `app/tailwind.config.js` đã được cấu hình để scan code ở cả `app/src/` và `../customize/`.
+- Lưu ý không sử dụng các class name được tạo động (dynamic class names) kiểu `className={`text-${color}-500`}` vì Tailwind sẽ không thể crawl được mã màu đó.
+
+### 4. Đảm bảo Fallback
+Mọi component hoặc config được gọi từ `@current-client` nên có một bản implementation mặc định trong `customize/default` để đảm bảo ứng dụng không bị crash khi một client mới chưa kịp override.
+
+### 5. Kiểm tra Build liên phiên bản
+Khi thay đổi mã nguồn tại `app/`, hãy thử chạy lệnh dev cho ít nhất 2 client khác nhau để đảm bảo thay đổi của bạn không phá vỡ layout của các client đã tồn tại.
 ```bash
-# Run default client
-yarn dev
-
-# Run specific client (e.g., hitowa)
+yarn dev default
 yarn dev hitowa
-
-# Run specific client (e.g., medix)
-yarn dev medix
 ```
 
-### Production Build
+---
 
-Build for a specific client:
+## 🚀 Optimization & Performance
 
-```bash
-# Build default client
-yarn build
+- **Lazy Loading**: Sử dụng `React.lazy` cho các route trong `router/` để giảm kích thước bundle ban đầu.
+- **Ant Design**: Tận dụng hệ thống Token của Ant Design 5 để đồng nhất style giữa Core và Client mà không cần viết quá nhiều CSS đè.
+- **Strict Mode**: Luôn giữ `React.StrictMode` bật trong quá trình phát triển để phát hiện sớm các vấn đề về side-effect.
 
-# Build specific client
-yarn build hitowa
-yarn build medix
-```
+---
 
-Output will be in `dist/{client-name}/`
-
-## 🔧 Configuration
-
-### Vite Configuration
-
-The `vite.config.ts` includes:
-
-- **Dynamic client resolution** - Automatically resolves client based on `VITE_CLIENT` environment variable
-- **Path aliases** for clean imports:
-  - `@/` → `app/src/`
-  - `@components/` → `app/src/components/`
-  - `@customize/` → `customize/`
-  - `@current-client` → Current client's entry point
-- **Optimized dependencies** - Pre-bundled common dependencies for faster dev server
-- **File system access** - Configured to allow access to both `app/` and `customize/` directories
-- **Code splitting** - Automatic chunking for React, Ant Design, and vendor libraries
-
-### TypeScript Configuration
-
-#### Root `tsconfig.json`
-- Shared configuration for the entire project
-- Defines path aliases matching Vite configuration
-- Includes both `app/src` and `customize/` directories
-
-#### App `tsconfig.json`
-- Extends root configuration
-- App-specific overrides if needed
-
-### Tailwind Configuration
-
-The `app/tailwind.config.js` is configured to scan:
-- `app/src/**/*.{js,ts,jsx,tsx}` - Base application files
-- `customize/**/*.{js,ts,jsx,tsx}` - All client customization files
-
-This ensures Tailwind classes from both base and client-specific code are included.
-
-## 📝 Creating Client Customizations
-
-### 1. Create Client Directory
-
-```bash
-mkdir -p customize/{client-name}/src
-```
-
-### 2. Create Entry Point
-
-Create `customize/{client-name}/index.ts`:
-
-```typescript
-// Export custom components
-export { default as CustomHeader } from './src/components/CustomHeader';
-export { default as CustomButton } from './src/components/CustomButton';
-
-// Export custom pages
-export { default as CustomDashboard } from './src/pages/Dashboard';
-```
-
-### 3. Create Custom Components
-
-Example: `customize/{client-name}/src/components/CustomHeader.tsx`
-
-```tsx
-import { AppButton } from '@/components/atoms/AppButton';
-import { Avatar, Button, Flex, Row } from 'antd';
-
-const CustomHeader = () => {
-  return (
-    <div id='header' style={{ background: '#custom-color' }}>
-      <div className='container'>
-        <Flex justify='between' className='header-wrap'>
-          <Row className='nav'>
-            <Button href='#' type='link' className='logo'>
-              Custom Logo
-            </Button>
-          </Row>
-        </Flex>
-      </div>
-    </div>
-  );
-};
-
-export default CustomHeader;
-```
-
-### 4. Use Custom Components in Base App
-
-In your base application, import from `@current-client`:
-
-```tsx
-import { CustomHeader } from '@current-client';
-
-function App() {
-  return (
-    <div>
-      <CustomHeader />
-      {/* Rest of your app */}
-    </div>
-  );
-}
-```
-
-## 🎨 Import Aliases
-
-Use these aliases for clean imports:
-
-```tsx
-// Base app components
-import { AppButton } from '@/components/atoms/AppButton';
-import { Header } from '@components/organisms/Header';
-
-// Client customizations
-import { CustomHeader } from '@current-client';
-import { CustomTheme } from '@customize/hitowa/src/theme';
-```
-
-## 🛠️ Tech Stack
-
-- **React 18** - UI library
-- **TypeScript 5** - Type safety
-- **Vite 5** - Build tool and dev server
-- **Ant Design 5** - UI component library
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **React Router 6** - Routing
-- **Redux Toolkit** - State management
-- **TanStack Query** - Server state management
-- **SWC** - Fast TypeScript/JSX compilation
-
-## 📦 Available Scripts
-
-- `yarn dev [client]` - Start development server
-- `yarn build [client]` - Build for production
-- `yarn preview` - Preview production build
-- `yarn lint` - Run ESLint
-- `yarn lint:fix` - Fix ESLint errors
-- `yarn typecheck` - Run TypeScript type checking
-
-## 🔒 Security Benefits
-
-- **Code isolation** - Only the selected client's code is bundled
-- **No client exposure** - Other clients' code is never exposed to the browser
-- **Build-time injection** - Client selection happens at build time, not runtime
-- **Type safety** - Full TypeScript support across base and custom code
-
-## 📚 Best Practices
-
-1. **Keep base app generic** - Don't include client-specific logic in `app/`
-2. **Use TypeScript** - Leverage type safety for better developer experience
-3. **Follow naming conventions** - Prefix custom components with `Custom` for clarity
-4. **Reuse base components** - Import and extend base components when possible
-5. **Test each client** - Run `yarn dev {client}` to verify customizations
-6. **Document customizations** - Add comments explaining client-specific logic
-
-## 🐛 Troubleshooting
-
-### TypeScript errors about missing modules
-
-Make sure your `tsconfig.json` includes the correct paths and the `customize/` directory is in the `include` array.
-
-### Vite can't resolve `@current-client`
-
-Ensure you're running the dev/build script with a valid client name that has an `index.ts` file in `customize/{client}/`.
-
-### Tailwind classes not working
-
-Check that `tailwind.config.js` includes the correct content paths for both `app/` and `customize/` directories.
+**Happy Coding! 🚀**

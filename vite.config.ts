@@ -45,6 +45,7 @@ export default defineConfig(() => {
         '@router': path.resolve(__dirname, 'app/src/router'),
         '@runtime': path.resolve(__dirname, 'app/src/runtime'),
         '@scss': path.resolve(__dirname, 'app/src/scss'),
+        '@services': path.resolve(__dirname, 'app/src/services'),
         '@shared': path.resolve(__dirname, 'app/src/shared'),
         '@store': path.resolve(__dirname, 'app/src/store'),
         '@types': path.resolve(__dirname, 'app/src/types'),
@@ -70,10 +71,7 @@ export default defineConfig(() => {
 
     server: {
       fs: {
-        allow: [
-          path.resolve(__dirname, 'app'),
-          path.resolve(__dirname, 'customize'),
-        ],
+        allow: [path.resolve(__dirname, 'app'), path.resolve(__dirname, 'customize')],
       },
     },
 
