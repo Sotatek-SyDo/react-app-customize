@@ -24,7 +24,7 @@ function run(cmd, args, env = {}) {
 }
 
 // Get client name from CLI args
-// Usage: npm run build lifelog  → build single client
+// Usage: npm run build hitowa  → build single client
 // Usage: npm run build          → build all clients
 const clientArg = process.argv[2];
 
