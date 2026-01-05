@@ -8,7 +8,7 @@ module.exports = {
         'plugin:@typescript-eslint/recommended',
         'plugin:react-hooks/recommended',
     ],
-    ignorePatterns: ['dist', 'coverage', '*.config.js', '*.config.ts', '.eslintrc.cjs'],
+    ignorePatterns: ['dist', 'coverage', '*.config.js', '*.config.ts', '.eslintrc.cjs', 'scripts'],
     rules: {
         '@typescript-eslint/no-explicit-any': 'off',
 

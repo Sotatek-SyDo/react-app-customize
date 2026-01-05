@@ -8,11 +8,9 @@ import { resolvePage } from '@/runtime/resolvePage';
 import type { ClientConfig } from '@/runtime/types';
 import React, { Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
-
+// eslint-disable-next-line react-refresh/only-export-components
 const PageWrapper = ({ pageKey, client }: { pageKey: PageKey; client?: ClientConfig }) => (
-  <Suspense fallback={<AppLoading />}>
-    {React.createElement(resolvePage(pageKey, client))}
-  </Suspense>
+  <Suspense fallback={<AppLoading />}>{React.createElement(resolvePage(pageKey, client))}</Suspense>
 );
 
 export function createRouter(client?: ClientConfig) {

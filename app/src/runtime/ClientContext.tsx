@@ -15,6 +15,7 @@ export function ClientProvider({ config, children }: ClientProviderProps) {
 /**
  * Hook to retrieve client configuration in any component
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useClientConfig(): ClientConfig | undefined {
   return useContext(ClientContext);
 }

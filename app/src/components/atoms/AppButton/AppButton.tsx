@@ -8,7 +8,7 @@ export interface AppButtonProps extends Omit<ButtonProps, 'color'> {
 
 export const AppButton = forwardRef<HTMLButtonElement, AppButtonProps>(
   (
-    { color = 'blue', type = 'primary', size = 'middle', className, ...props }: AppButtonProps,
+    { color: _color, type = 'primary', size = 'middle', className, ...props }: AppButtonProps,
     ref
   ) => {
     return <Button ref={ref} type={type} size={size} className={className} {...props} />;
